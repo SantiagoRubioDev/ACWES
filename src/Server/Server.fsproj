@@ -1,0 +1,26 @@
+<Project Sdk="FSharp.NET.Sdk;Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp1.1</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Shared/Domain.fs" />
+    <Compile Include="Processes.fs" />
+    <Compile Include="Query.fs" />
+    <Compile Include="ServerTypes.fs" />
+    <Compile Include="TokenUtils.fs" />
+    <Compile Include="DBDefault.fs" />
+    <Compile Include="DBFile.fs" />
+    <Compile Include="Auth.fs" />
+    <Compile Include="WishList.fs" />
+    <!--<Compile Include="Modules.fs" />-->
+    <Compile Include="RestAPI.fs" />
+    <Compile Include="Server.fs" />
+    <Compile Include="Program.fs" />
+    <PackageReference Include="FSharp.NET.Sdk" Version="1.0.0-beta-060000" PrivateAssets="All" />
+    <DotNetCliToolReference Include="dotnet-compile-fsc" Version="1.0.0-preview2-020000" />
+    <EmbeddedResource Include="**\*.resx" />
+    <DotNetCliToolReference Include="Microsoft.DotNet.Watcher.Tools" Version="1.0.0" />
+  </ItemGroup>
+  <Import Project="..\..\.paket\Paket.Restore.targets" />
+</Project>

@@ -1,0 +1,5 @@
+@echo off
+cls
+
+..\..\packages\FSharp.Compiler.Tools\Tools\fsc.exe ..\run1.fs --standalone -o ..\run1.exe
+..\run1
