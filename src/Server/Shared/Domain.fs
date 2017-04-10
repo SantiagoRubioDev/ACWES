@@ -181,6 +181,21 @@ type UserRow =
 
 type UserTable = UserRow list
 
+/////Coursework///////
+
+type StudentCoursework =
+    { AssignmentID: ID
+      State: string
+      CmdOut: string
+      Feedback: string
+      Grade: string}
+
+    static member New id= 
+        { AssignmentID = id
+          State = ""
+          CmdOut = ""
+          Feedback = ""
+          Grade = ""}
 
 (*
 type AssignmentHead =

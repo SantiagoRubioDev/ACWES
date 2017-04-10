@@ -24,7 +24,7 @@ type Model = {
 let getAssignments (id,token) =
     Browser.console.log("getAssignments: Id is: " + id)
     promise {        
-        let url = "api/module/assignments?ModuleId="+id
+        let url = "api/assignments?ModuleId="+id
         let props = 
             [ RequestProperties.Headers [
                 HttpRequestHeaders.Authorization ("Bearer " + token) ]]

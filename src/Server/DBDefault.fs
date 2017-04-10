@@ -44,18 +44,25 @@ let userList:UserTable =
                  Password = "test2" 
                  Type = "Teacher" } }
       { ID = "3"
-        Data = { UserName = "student"
-                 Password = "student" 
+        Data = { UserName = "Student"
+                 Password = "Student" 
                  Type = "Student" } }
       { ID = "4"
         Data = { UserName = "Teacher"
                  Password = "Teacher"
                  Type = "Teacher" } }
       { ID = "5"
-        Data = { UserName = "student2"
-                 Password = "student2" 
+        Data = { UserName = "Student2"
+                 Password = "Student2" 
                  Type = "Student" } }
       { ID = "6"
         Data = { UserName = "Teacher2"
                  Password = "Teacher2" 
                  Type = "Teacher" } } ] 
+
+let coursework : StudentCoursework =
+    { AssignmentID = ""
+      State = ""
+      CmdOut = ""
+      Feedback = ""
+      Grade = ""}

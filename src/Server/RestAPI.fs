@@ -34,8 +34,19 @@ module Upload =
                 let filePath = "./"+dirPath+filename
 
                 DBFile.Upload.write fileText ctx
+
+                let cmdOut = Processes.runScript (filePath+".cmd")
+
+                let coursework = 
+                    { AssignmentID = Query.useAssignmentId ctx
+                      State = "Run Success: Done"
+                      CmdOut = cmdOut
+                      Feedback = "Good Job"
+                      Grade = "A" }
+
+                DBFile.Coursework.write coursework ctx
                 
-                return! Successful.OK ( Processes.runScript (filePath+".cmd") ) ctx//(dirPath+"attempt1.cmd")  "file uploaded correctly" ctx
+                return! Successful.OK ( "upload successful" ) ctx//(dirPath+"attempt1.cmd")  "file uploaded correctly" ctx
 
             with exn ->
                 logger.error (eventX "Database not available" >> addExn exn)
@@ -104,6 +115,21 @@ module Assignments =
                     return! INTERNAL_ERROR "assignment id not found in assignemtns Table" ctx
                 else
                     return! Successful.OK (JsonConvert.SerializeObject assignments) ctx
+            with exn ->
+                logger.error (eventX "SERVICE_UNAVAILABLE" >> addExn exn)
+                return! SERVICE_UNAVAILABLE "Database not available" ctx
+        })
+
+module Coursework =
+    /// Handle the GET on /api/coursework
+    let get (ctx: HttpContext) =
+        Auth.useToken ctx (fun token -> async {
+            try
+                let coursework = DBFile.Coursework.read ctx//token.UserName
+                if coursework.AssignmentID = "" then
+                    return! INTERNAL_ERROR "Please upload your coursework" ctx
+                else
+                    return! Successful.OK (JsonConvert.SerializeObject coursework) ctx
             with exn ->
                 logger.error (eventX "SERVICE_UNAVAILABLE" >> addExn exn)
                 return! SERVICE_UNAVAILABLE "Database not available" ctx

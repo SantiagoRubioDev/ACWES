@@ -57,9 +57,11 @@ type AssignmentsMsg =
 /// The messages processed coursework 
 type CourseworkMsg =
   | ClickUpload
+  | UploadSuccess of string
   | SetUploadFile of Fable.Import.Browser.FileList//of string
-  | FetchedCoursework of string//Fable.Import.Browser.File
+  | FetchedCoursework of StudentCoursework//string//Fable.Import.Browser.File
   | FetchCourseworkError of exn
+  | UploadError of exn
 
 /// The messages processed online test 
 type OnlineTestMsg =

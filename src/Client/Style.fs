@@ -47,3 +47,6 @@ let onEnter msg dispatch =
 
 //Tabs
 let tabcontent active = div [ ClassName "tabcontent"; Style (if active then [Display "block"] else [Display "none"] ) ]
+let loading txt = div [ Style [Margin "1em 0 1em 0"] ] [
+                    div [ClassName "loader"; Style [Float "left"; Margin "0 1em 0 1em"] ] [] //Src "/img/loading_icon.gif"
+                    div [ ] [ text ("..."+txt) ] ]

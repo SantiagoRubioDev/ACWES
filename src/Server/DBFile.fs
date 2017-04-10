@@ -33,6 +33,8 @@ module JSONFileName =
 
     let users = "./temp/db/users.json"
 
+    let coursework ctx = (Path.uploadDir ctx)+"coursework.json"
+
 /// Query the database for Modules
 module Modules =
 
@@ -96,3 +98,21 @@ module Upload =
         with exn ->
             logger.error (eventX "Save failed with exception" >> addExn exn)
 
+module Coursework =
+    
+    let read ctx=
+        let fi = FileInfo(JSONFileName.coursework ctx)
+        if not fi.Exists then
+            DBDefault.coursework
+        else
+            File.ReadAllText(fi.FullName)
+            |> JsonConvert.DeserializeObject<StudentCoursework>
+
+    let write (coursework:StudentCoursework) ctx =
+        try
+            let fi = FileInfo(JSONFileName.coursework ctx)
+            if not fi.Directory.Exists then
+                fi.Directory.Create()
+            File.WriteAllText(fi.FullName,JsonConvert.SerializeObject coursework)
+        with exn ->
+            logger.error (eventX "Save failed with exception" >> addExn exn)
