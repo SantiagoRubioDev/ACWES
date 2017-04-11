@@ -25,7 +25,7 @@ let login (ctx: HttpContext) = async {
         |> JsonConvert.DeserializeObject<Domain.Login>
 
     try
-        let user = List.tryFind (fun user -> user.Data.UserName = login.UserName) DBFile.Users.read
+        let user = List.tryFind (fun user -> user.Data.UserName = login.UserName) (DBFile.Users.read())
         if user.IsNone then
             return! failwithf "Could not authenticate %s" login.UserName
         elif user.IsSome then

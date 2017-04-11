@@ -14,7 +14,7 @@ let useAssignmentId (ctx: HttpContext) =
     | Choice1Of2 id -> id
     | _ -> "fail"
 
-///?UserName=
+///?UserName= //this is not needed use token.UserName instead!!!
 let useUserName (ctx: HttpContext) =
     match ctx.request.queryParam "UserName" with
     | Choice1Of2 id -> id

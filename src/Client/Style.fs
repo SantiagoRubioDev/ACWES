@@ -5,6 +5,7 @@ open Fable.Helpers.React
 open Fable.Helpers.React.Props
 open Fable.Core
 open Fable.Import
+open Fable.Core.JsInterop
 open Elmish
 open Fable.Import.Browser
 open Fable.PowerPack
@@ -50,3 +51,25 @@ let tabcontent active = div [ ClassName "tabcontent"; Style (if active then [Dis
 let loading txt = div [ Style [Margin "1em 0 1em 0"] ] [
                     div [ClassName "loader"; Style [Float "left"; Margin "0 1em 0 1em"] ] [] //Src "/img/loading_icon.gif"
                     div [ ] [ text ("..."+txt) ] ]
+
+//form group for new insertions
+let form_group name status default_string dispatch_msg errortxt glyphtype =
+    div [ClassName ("form-group has-feedback" + status)] [
+        yield div [ClassName "input-group"] [
+                yield span [ClassName "input-group-addon"] [span [ClassName ("glyphicon glyphicon-"+glyphtype) ] [] ]
+                yield input [
+                        HTMLAttr.Type "text"
+                        Name name
+                        DefaultValue (U2.Case1 default_string)
+                        ClassName "form-control"
+                        Placeholder ("Please insert "+name)
+                        Required true
+                        OnChange (fun (ev:React.FormEvent) -> dispatch_msg ( unbox ev.target?value )) ] []
+                match errortxt with
+                | Some e -> yield span [ClassName "glyphicon glyphicon-remove form-control-feedback"] []
+                | _ -> ()
+        ]
+        match errortxt with
+        | Some e -> yield p [ClassName "text-danger"][text e]
+        | _ -> ()
+    ]

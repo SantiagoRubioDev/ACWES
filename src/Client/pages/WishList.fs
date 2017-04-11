@@ -70,7 +70,7 @@ let update (msg:WishListMsg) model : Model*Cmd<WishListMsg> =
     | FetchedWishList wishList ->
         let wishList = { wishList with Books = wishList.Books |> List.sortBy (fun b -> b.Title) }
         { model with WishList = wishList }, Cmd.none
-    | TitleChanged title -> 
+    | WishListMsg.TitleChanged title -> 
         { model with NewBook = { model.NewBook with Title = title }; TitleErrorText = WishListValidation.verifyBookTitle title }, Cmd.none
     | AuthorsChanged authors -> 
         { model with NewBook = { model.NewBook with Authors = authors }; AuthorsErrorText = WishListValidation.verifyBookAuthors authors }, Cmd.none
@@ -88,7 +88,7 @@ let update (msg:WishListMsg) model : Model*Cmd<WishListMsg> =
                 TitleErrorText = WishListValidation.verifyBookTitle model.NewBook.Title
                 AuthorsErrorText = WishListValidation.verifyBookAuthors model.NewBook.Authors
                 LinkErrorText = WishListValidation.verifyBookLink model.NewBook.Link }, Cmd.none
-    | FetchError _ -> 
+    | WishListMsg.FetchError _ -> 
         model, Cmd.none
 
 let newBookForm (model:Model) dispatch =

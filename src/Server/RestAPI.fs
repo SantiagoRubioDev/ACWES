@@ -59,7 +59,7 @@ module Modules =
     let get (ctx: HttpContext) =
         Auth.useToken ctx (fun token -> async {
             try
-                let modules = DBFile.Modules.read token.UserName
+                let modules = DBFile.Modules.readForUser token.UserName
                 return! Successful.OK (JsonConvert.SerializeObject modules) ctx
             with exn ->
                 logger.error (eventX "SERVICE_UNAVAILABLE" >> addExn exn)
@@ -70,20 +70,28 @@ module Modules =
     let post (ctx: HttpContext) =
         Auth.useToken ctx (fun token -> async {
             try
-                let modules:Domain.ModuleTable = 
+
+                let newModule:Domain.ModuleRow = 
                     ctx.request.rawForm
                     |> System.Text.Encoding.UTF8.GetString
-                    |> JsonConvert.DeserializeObject<Domain.ModuleTable>
+                    |> JsonConvert.DeserializeObject<Domain.ModuleRow>
             
                 //if token.UserName <> modules.UserName then
                 //    return! UNAUTHORIZED (sprintf "Modules is not matching user %s" token.UserName) ctx
                 //else
+
+                let allModules = DBFile.Modules.readAll() //token.UserName
+
+                let userModules = DBFile.Modules.readForUser token.UserName
+
+                let moduleWithNewModuleID = (ModulesValidation.verifyModules newModule allModules)
                 
-                if ModulesValidation.verifyModules modules then
-                    DBFile.Modules.write modules
-                    return! Successful.OK (JsonConvert.SerializeObject modules) ctx
+                if  moduleWithNewModuleID = None then
+                    DBFile.Modules.write (newModule::allModules)
+                    DBFile.Users.addModuleId [token.UserName] newModule.ID
+                    return! Successful.OK (JsonConvert.SerializeObject (newModule::userModules)) ctx
                 else
-                    return! BAD_REQUEST "Modules is not valid" ctx
+                    return! BAD_REQUEST ( "Module with ID " + moduleWithNewModuleID.Value.ID + " already exists in the database. It is " + moduleWithNewModuleID.Value.Data.Title + " owned by " + moduleWithNewModuleID.Value.Data.Teacher ) ctx
             with exn ->
                 logger.error (eventX "Database not available" >> addExn exn)
                 return! SERVICE_UNAVAILABLE "Database not available" ctx
@@ -94,7 +102,7 @@ module Module =
     let get (ctx: HttpContext) =
         Auth.useToken ctx (fun token -> async {
             try
-                let modules = DBFile.Modules.read token.UserName
+                let modules = DBFile.Modules.readForUser token.UserName
                 let _module = List.tryFind (fun (x:ModuleRow) -> x.ID = (Query.useModuleId ctx)) modules
                 if _module.IsSome then
                     return! Successful.OK (JsonConvert.SerializeObject _module.Value) ctx

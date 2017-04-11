@@ -9,14 +9,6 @@ open Suave.Logging.Message
 let logger = Log.create "FableSample"      
 
 
-//Do I keep this here??
-let filteredModules (student:Student) (modules:ModuleTable) =
-    let filtered:ModuleTable = 
-        List.filter 
-            (fun x -> 
-                List.contains x.ID student.ModulesID )  modules
-    filtered
-
 
 //get path for upload download and others
 module Path =
@@ -27,24 +19,78 @@ module JSONFileName =
 
     let modules = "./temp/db/modules.json"
 
-    let student userName = sprintf "./temp/db/students/%s.json" userName
-
     let assignment moduleId = sprintf "./temp/db/modules/%s/assignments.json" moduleId
 
     let users = "./temp/db/users.json"
 
     let coursework ctx = (Path.uploadDir ctx)+"coursework.json"
 
+module Users =
+    
+    let read ()=
+        let fi = FileInfo(JSONFileName.users)
+        if not fi.Exists then
+            DBDefault.userList
+        else
+            File.ReadAllText(fi.FullName)
+            |> JsonConvert.DeserializeObject<UserTable>
+
+    let addModuleId (userNames:string list) (moduleId:ID) =
+        try
+            let users = read()
+            let fi = FileInfo(JSONFileName.users)
+            if not fi.Directory.Exists then
+                fi.Directory.Create()
+
+            let updateUser (user:UserRow) moduleId =
+                { user with Data = { user.Data with ModulesID = moduleId::user.Data.ModulesID } }
+
+            let usersupdated:UserTable =
+                List.map (fun user -> 
+                    if (List.contains user.Data.UserName userNames) then 
+                        (updateUser user moduleId)     
+                    else 
+                        user
+                    ) users
+                    
+            File.WriteAllText(fi.FullName,JsonConvert.SerializeObject usersupdated)
+        with exn ->
+            logger.error (eventX "Save failed with exception" >> addExn exn)
+
+
 /// Query the database for Modules
 module Modules =
 
-    let read userName =
+    let readAll () : ModuleTable =
         let fi = FileInfo(JSONFileName.modules)
         if not fi.Exists then
-            filteredModules (DBDefault.student userName) DBDefault.modules
+            DBDefault.modules
         else
             File.ReadAllText(fi.FullName)
             |> JsonConvert.DeserializeObject<ModuleTable>
+
+    let readForUser userName : ModuleTable =
+        let users = Users.read()
+
+        logger.debug (eventX ( "users.read = "+(JsonConvert.SerializeObject users) ))
+
+        let modules = readAll()
+
+        logger.debug (eventX ( "modules.readAll = "+(JsonConvert.SerializeObject modules) ))
+
+        let user = List.tryFind (fun user -> user.Data.UserName = userName ) users
+
+        logger.debug (eventX ( "user = "+(JsonConvert.SerializeObject user) ))
+
+        if user = None then
+            []
+        else
+            let userModules : ModuleTable = 
+                List.filter (fun (x:ModuleRow) -> List.contains x.ID user.Value.Data.ModulesID )  modules
+            logger.debug (eventX ( "userModules = "+(JsonConvert.SerializeObject userModules) ))
+            userModules
+            
+
 
     let write (modules:ModuleTable) =
         try
@@ -64,16 +110,6 @@ module Assignments =
         else
             File.ReadAllText(fi.FullName)
             |> JsonConvert.DeserializeObject<AssignmentTable>
-
-module Users =
-    let read =
-        let fi = FileInfo(JSONFileName.users)
-        if not fi.Exists then
-            DBDefault.userList
-        else
-            File.ReadAllText(fi.FullName)
-            |> JsonConvert.DeserializeObject<UserTable>
-
 
 module Upload =
     let write fileText ctx=

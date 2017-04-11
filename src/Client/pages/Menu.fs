@@ -25,12 +25,12 @@ let view (model:Model) dispatch =
     div [ centerStyle "row" ] [ 
           yield viewLink Home "Home"
           if model.User <> None then 
-              yield viewLink Page.WishList "Wishlist"
+              //yield viewLink Page.WishList "Wishlist"
               yield viewLink Page.Modules "Modules"
-              yield viewLink Page.Module "Module"
+              //yield viewLink Page.Module "Module"
               yield viewLink Page.Tutorial "Tutorial"
               yield viewLink Page.Assignments "Assignments"
-              yield viewLink Page.Coursework "Coursework"
+              //yield viewLink Page.Coursework "Coursework"
               yield viewLink Page.OnlineTest "OnlineTest"
           if model.User = None then 
               yield viewLink (Login) "Login" 

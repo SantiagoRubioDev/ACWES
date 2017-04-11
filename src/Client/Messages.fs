@@ -26,6 +26,10 @@ type WishListMsg =
 /// The messages processed modules 
 type ModulesMsg =
   | FetchedModules of ModuleTable
+  | AddModule
+  | TitleChanged of string
+  | IDChanged of string
+  | AddModuleError of exn
   | FetchModulesError of exn
 
 /// The messages processed module 

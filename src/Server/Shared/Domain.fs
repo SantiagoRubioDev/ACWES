@@ -84,17 +84,6 @@ module WishListValidation =
     let verifyWishList wishList =
         wishList.Books |> List.forall verifyBook
 
-
-///---------------------STUDENT-----------------------///
-
-type Student =
-    { UserName: string
-      ModulesID: ID list}
-
-    static member New userName = 
-        { UserName = userName
-          ModulesID = [] }
-
 ///---------------------MODULES-----------------------///
 
 // The logical representation of the data for /api/modules
@@ -106,10 +95,6 @@ type Module =
     static member New = 
         { Title = ""
           Teacher = "" }
-
-module ModulesValidation =
-
-    let verifyModules modules = true
 
 ///---------------------MODULE-----------------------///
 
@@ -129,6 +114,23 @@ type ModuleRow =
           Data = Module.New }
 
 type ModuleTable = ModuleRow list
+
+module ModulesValidation =
+
+    let verifyModuleId id = 
+        if String.IsNullOrWhiteSpace id then Some "No ID was entered" else
+        None
+
+    let verifyModuleTitle title =
+        if String.IsNullOrWhiteSpace title then Some "No title was entered" else
+        None
+
+    let verifyModule (_module:ModuleRow) =
+        verifyModuleId _module.Data.Title = None &&
+        verifyModuleTitle _module.ID = None
+
+    let verifyModules (newModule:ModuleRow) (oldmodules:ModuleTable) =
+        List.tryFind (fun oldmodule -> oldmodule.ID = newModule.ID ) oldmodules
 
 ///---------------------Assignment-----------------------///
 
@@ -164,12 +166,20 @@ type AssignmentTable = AssignmentRow list
 type User =
     { UserName : string
       Password : string
-      Type : string}
+      Type : string
+      ModulesID : ID list}
 
-    static member New = 
+    static member empty = 
         { UserName = ""
           Password = ""
-          Type = "" }
+          Type = "" 
+          ModulesID = []}
+
+    static member New name pass _type = 
+        { UserName = name
+          Password = pass
+          Type = _type 
+          ModulesID = [] }
 
 type UserRow =
     { ID:ID
@@ -177,7 +187,7 @@ type UserRow =
 
     static member New = 
         { ID = ""
-          Data = User.New }
+          Data = User.empty }
 
 type UserTable = UserRow list
 
