@@ -37,6 +37,11 @@ type ModuleMsg =
   | SetActiveTab of Tab
   | FetchedModule of ModuleRow
   | FetchedAssignments of AssignmentTable
+  | NewAssignmentChanged of AssignmentRow
+  | AddAssignment
+  | FetchedStudents of UserTable
+  | NewStudentChanged of string
+  | AddStudents
   | FetchModuleError of exn
 
 type InitModule =
@@ -78,6 +83,7 @@ type AppMsg =
   | LoggedOut
   | StorageFailure of exn
   | OpenLogIn
+  | OpenModuleWithStudent of ID*User
   | OpenModuleWithRow of ModuleRow
   | OpenModuleWithID of ID*Tab
   | OpenCoursework of AssignmentRow

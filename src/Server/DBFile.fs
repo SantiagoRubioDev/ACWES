@@ -72,15 +72,9 @@ module Modules =
     let readForUser userName : ModuleTable =
         let users = Users.read()
 
-        logger.debug (eventX ( "users.read = "+(JsonConvert.SerializeObject users) ))
-
         let modules = readAll()
 
-        logger.debug (eventX ( "modules.readAll = "+(JsonConvert.SerializeObject modules) ))
-
         let user = List.tryFind (fun user -> user.Data.UserName = userName ) users
-
-        logger.debug (eventX ( "user = "+(JsonConvert.SerializeObject user) ))
 
         if user = None then
             []
@@ -103,13 +97,22 @@ module Modules =
 
 /// Query the database
 module Assignments =
-    let read moduleId =
+    let readForModule moduleId =
         let fi = FileInfo(JSONFileName.assignment moduleId)
         if not fi.Exists then
             DBDefault.assignments moduleId
         else
             File.ReadAllText(fi.FullName)
             |> JsonConvert.DeserializeObject<AssignmentTable>
+
+    let write moduleId (assignments:AssignmentTable) =
+        try
+            let fi = FileInfo(JSONFileName.assignment moduleId)
+            if not fi.Directory.Exists then
+                fi.Directory.Create()
+            File.WriteAllText(fi.FullName,JsonConvert.SerializeObject assignments)
+        with exn ->
+            logger.error (eventX "Save failed with exception" >> addExn exn)
 
 module Upload =
     let write fileText ctx=

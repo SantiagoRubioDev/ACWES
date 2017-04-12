@@ -73,7 +73,7 @@ let update (msg:LoginMsg) model : Model*Cmd<LoginMsg> =
     | LoginMsg.SetPassword pw ->
         { model with Login = { model.Login with Password = pw }}, []
     | LoginMsg.ClickLogIn ->
-        model, authUserCmd model.Login "/api/users/login"
+        model, authUserCmd model.Login "/api/users/login/"
     | LoginMsg.AuthError exn ->
         { model with ErrorMsg = string (exn.Message) }, []
 

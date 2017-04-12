@@ -25,7 +25,7 @@ type Model = {
 /// Get the wish list from the server, used to populate the model
 let getModules token =
     promise {        
-        let url = "api/modules/"
+        let url = "/api/modules/"
         let props = 
             [ RequestProperties.Headers [
                 HttpRequestHeaders.Authorization ("Bearer " + token) ]]
@@ -38,7 +38,7 @@ let loadModulesCmd token =
 
 let postModules (user,newModule) =
     promise {        
-        let url = "api/modules/?UserName="+user.UserName
+        let url = "/api/modules/"
         let body = toJson newModule
         let props = 
             [ RequestProperties.Method HttpMethod.POST

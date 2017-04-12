@@ -37,20 +37,26 @@ let startServer clientPath =
                 
                 path "/api/modules/" >=> RestAPI.Modules.get
 
-                path "/api/module" >=> RestAPI.Module.get
+                path "/api/module/" >=> RestAPI.Module.get
                 
-                path "/api/assignments" >=> RestAPI.Assignments.get 
+                path "/api/assignments/" >=> RestAPI.Assignments.get 
                 
-                path "/api/coursework" >=> RestAPI.Coursework.get ]
+                path "/api/coursework/" >=> RestAPI.Coursework.get
+                
+                path "/api/users/students/" >=> RestAPI.Users.getStudents  ]
 
             POST >=> choose [
-                path "/api/users/login" >=> Auth.login
+                path "/api/users/login/" >=> Auth.login
 
                 path "/api/wishlist/" >=> WishList.postWishList
 
                 path "/api/modules/" >=> RestAPI.Modules.post
 
-                path "/api/upload" >=> RestAPI.Upload.post  // Successful.OK "is valid"//
+                path "/api/upload/" >=> RestAPI.Upload.post  // Successful.OK "is valid"//
+
+                path "/api/user/assignmodule/" >=> RestAPI.Users.assignModule
+
+                path "/api/assignments/" >=> RestAPI.Assignments.post
             ]                
             
             NOT_FOUND "Page not found."

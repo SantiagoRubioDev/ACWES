@@ -104,6 +104,7 @@ type Tab =
     | LectureNotes
     | Tutorials
     | OnlineTests
+    | Students
 
 type ModuleRow =
     { ID:ID
@@ -132,6 +133,15 @@ module ModulesValidation =
     let verifyModules (newModule:ModuleRow) (oldmodules:ModuleTable) =
         List.tryFind (fun oldmodule -> oldmodule.ID = newModule.ID ) oldmodules
 
+module ModuleValidation =
+
+    let verifyStudentsNotEmpty students = 
+        if String.IsNullOrWhiteSpace students then Some "No students was entered" else
+        None
+
+    let verifyStudents students =
+        verifyStudentsNotEmpty students = None
+
 ///---------------------Assignment-----------------------///
 
 type Assignment = 
@@ -148,10 +158,6 @@ type Assignment =
           EndDate = ""
           Grade = ""}
 
-module AssignmentValidation =
-
-    let verifyModules assignment = true
-
 type AssignmentRow =
     { ID:ID
       Data: Assignment}
@@ -161,6 +167,16 @@ type AssignmentRow =
           Data = Assignment.New }
 
 type AssignmentTable = AssignmentRow list
+
+
+module AssignmentValidation =
+
+    let verifyAssignmentID assignment = 
+        if String.IsNullOrWhiteSpace assignment then Some "ID is missing" else
+        None
+    
+    let verifyAssignment (assignment:AssignmentRow) = 
+        verifyAssignmentID assignment.ID = None
 
 //User
 type User =

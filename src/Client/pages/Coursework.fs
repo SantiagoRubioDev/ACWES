@@ -37,7 +37,7 @@ type Model = {
 
 let getCoursework (model:Model) =
     promise {        
-        let url = "/api/coursework?ModuleId="+model.Assignment.ModuleID+
+        let url = "/api/coursework/?ModuleId="+model.Assignment.ModuleID+
                   "&AssignmentId="+model.AssignmentID+"&UserName="+model.User.UserName
         let props = 
             [ RequestProperties.Headers [
@@ -48,7 +48,7 @@ let getCoursework (model:Model) =
 
 let postCoursework (model:Model) =
     promise {        
-        let url = "/api/upload?ModuleId="+model.Assignment.ModuleID+
+        let url = "/api/upload/?ModuleId="+model.Assignment.ModuleID+
                   "&AssignmentId="+model.AssignmentID+"&UserName="+model.User.UserName
         let body = model.File.Value
         let props = 
