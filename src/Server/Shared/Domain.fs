@@ -98,7 +98,7 @@ type Module =
 
 ///---------------------MODULE-----------------------///
 
-type Tab = 
+type ModuleTab = 
     | ModuleInfo
     | Assignments
     | LectureNotes
@@ -143,6 +143,17 @@ module ModuleValidation =
         verifyStudentsNotEmpty students = None
 
 ///---------------------Assignment-----------------------///
+
+type CourseworkTab = 
+    | Initial
+    | Specifications
+    | OriginalCode
+    | ModifiedCode
+    | CmdOutput
+    | Feedback
+    | TestBench
+    | Students
+    | ModelAnswer
 
 type Assignment = 
     { ModuleID: ID

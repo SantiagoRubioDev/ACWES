@@ -36,6 +36,7 @@ let login (ctx: HttpContext) = async {
         let token = TokenUtils.encode userright
 
         return! Successful.OK (token+" "+user.Value.Data.Type) ctx
+        //return! Successful.OK ("authenticated") ctx
     with
     | _ -> return! UNAUTHORIZED (sprintf "User '%s' can't be logged in." login.UserName) ctx
 }

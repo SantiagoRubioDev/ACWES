@@ -24,7 +24,7 @@ type Model = {
     Students : UserTable
     NewStudents : string
     NewStudentsErrorTxt : string option
-    ActiveTab : Tab
+    ActiveTab : ModuleTab
     ErrorMsg : string }
 
 let getAssignments (id,token) =
@@ -268,7 +268,7 @@ let view (model:Model) (dispatch: AppMsg -> unit) =
     let tabButton text typ show=
         button
             [ ClassName <| "tablinks " + (if typ=model.ActiveTab then "active " else " ") + (if show then "" else "hide")
-            ; OnClick (fun _ -> dispatch <| ModuleMsg (SetActiveTab typ)) ] [ str text ]
+            ; OnClick (fun _ -> dispatch <| ModuleMsg (ModuleMsg.SetActiveTab typ)) ] [ str text ]
     div [] [
         //back button
         div [] [ button [ ClassName "btn btn-primary"; OnClick (fun _ -> dispatch LoggedIn) ] [ text "back" ]]
@@ -277,18 +277,18 @@ let view (model:Model) (dispatch: AppMsg -> unit) =
         //Tab buttons
         div [ ClassName "tab" ] [
             tabButton "Module Info" ModuleInfo true
-            tabButton "Assignments" Tab.Assignments true
+            tabButton "Assignments" ModuleTab.Assignments true
             tabButton "Lecture notes" LectureNotes true
             tabButton "Tutorials" Tutorials true
             tabButton "Online tests" OnlineTests true
-            tabButton "Students" Students (model.User.UserType = "Teacher") ]
+            tabButton "Students" ModuleTab.Students (model.User.UserType = "Teacher") ]
         //Module Info content
         tabcontent (model.ActiveTab = ModuleInfo) 
             [ h3 [] [str "Module Info"]
               div [] [text ("Module ID: " + model.ID)]
               div [] [text ("Module owned by " + model.Module.Teacher)]]
         //Assignments content
-        tabcontent (model.ActiveTab = Tab.Assignments) 
+        tabcontent (model.ActiveTab = ModuleTab.Assignments) 
             [ h3 [][text "Assignments"]
               table [ClassName "table table-striped table-hover"] [
                 thead [] [
@@ -314,20 +314,20 @@ let view (model:Model) (dispatch: AppMsg -> unit) =
                                     td [] [ text assignment.Data.Grade] ] ] ]
               div [ClassName ( if model.User.UserType = "Teacher" then "" else "hide" )] [newAssignmentForm model dispatch] ]
         //Lecture Notes
-        tabcontent (model.ActiveTab = Tab.LectureNotes)
+        tabcontent (model.ActiveTab = ModuleTab.LectureNotes)
             [ h3 [][text "Lecture notes"]]
-        tabcontent (model.ActiveTab = Tab.Tutorials)
+        tabcontent (model.ActiveTab = ModuleTab.Tutorials)
             [ h3 [][text "Tutorials"]]
-        tabcontent (model.ActiveTab = Tab.OnlineTests)
+        tabcontent (model.ActiveTab = ModuleTab.OnlineTests)
             [ h3 [][text "Online tests"]]
         //Students (only for Teacher users)
-        tabcontent (model.ActiveTab = Tab.Students) 
+        tabcontent (model.ActiveTab = ModuleTab.Students) 
             [ h3 [][text "Students"]
               table [ClassName "table table-striped table-hover"] [
                 thead [] [
                     tr [] [
                         th [] [text "Student"]
-                        th [] [text "Module"] ] ]                
+                        th [] [text "Assignments"] ] ]                
                 tbody[] [
                     if model.Students.IsEmpty 
                     then 
@@ -337,7 +337,8 @@ let view (model:Model) (dispatch: AppMsg -> unit) =
                         for student in model.Students do
                             yield 
                                 tr [] [
-                                    td [] [ text (student.Data.UserName) ]
-                                    td [] [ yield button [ ClassName ("btn btn-primary"); OnClick (fun _ -> dispatch (OpenModuleWithStudent (model.ID,student.Data))) ] [ text student.Data.UserName ] ] ] ] ]
+                                    
+                                    td [] [ yield button [ ClassName ("btn btn-primary"); OnClick (fun _ -> dispatch (OpenModuleWithStudent (model.ID,student.Data))) ] [ text student.Data.UserName ] ] 
+                                    assignment_Grade_ID model.Assignments (fun assignmentId -> (fun _ -> dispatch (OpenCourseworkWithStudent (model.ID,assignmentId,student.Data)))) ] ] ]
               newStudentForm model dispatch ]
     ]

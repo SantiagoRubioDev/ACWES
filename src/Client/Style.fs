@@ -47,7 +47,7 @@ let onEnter msg dispatch =
         | _ -> ())
 
 //Tabs
-let tabcontent active = div [ ClassName "tabcontent"; Style (if active then [Display "block"] else [Display "none"] ) ]
+let tabcontent active = div [Style (if active then [ Margin "0 auto"; Padding "6px 12px"; CSSProp.Width "1200px"; Border "1px solid #ccc"; Overflow "auto"; Display "block"] else [Display "none"] ) ]
 let loading txt = div [ Style [Margin "1em 0 1em 0"] ] [
                     div [ClassName "loader"; Style [Float "left"; Margin "0 1em 0 1em"] ] [] //Src "/img/loading_icon.gif"
                     div [ ] [ text ("..."+txt) ] ]
@@ -73,3 +73,12 @@ let form_group name status default_string dispatch_msg errortxt glyphtype =
         | Some e -> yield p [ClassName "text-danger"][text e]
         | _ -> ()
     ]
+
+let assignment_Grade_ID (assignments:ServerCode.Domain.AssignmentTable) onclickfun=
+    td [] [
+        for assignment in assignments do
+            yield
+                button [ ClassName ("btn btn-primary"); OnClick (onclickfun assignment.ID) ] [ text assignment.ID ];
+                yield Fable.Helpers.React.text [Style[Margin "1px 12px 1px 1px"; CSSProp.FontSize (U2.Case1 20.0)]] [unbox (if assignment.Data.Grade = "" then "N/A" else assignment.Data.Grade)]
+    ]
+    

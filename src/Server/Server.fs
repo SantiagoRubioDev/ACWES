@@ -25,6 +25,7 @@ let startServer clientPath =
         { defaultConfig with
             logger = Targets.create LogLevel.Verbose [||] //changed LogLevel.Debug to Verbose for debug
             homeFolder = Some clientPath
+            maxContentLength = 500000000 //500MB      
             bindings = [ HttpBinding.create HTTP (IPAddress.Parse "0.0.0.0") 8085us] }
 
     let app =
@@ -52,7 +53,9 @@ let startServer clientPath =
 
                 path "/api/modules/" >=> RestAPI.Modules.post
 
-                path "/api/upload/" >=> RestAPI.Upload.post  // Successful.OK "is valid"//
+                path "/api/upload/coursework/" >=> RestAPI.Upload.coursework  // Successful.OK "is valid"//
+
+                path "/api/upload/testbench/" >=> RestAPI.Upload.testbench
 
                 path "/api/user/assignmodule/" >=> RestAPI.Users.assignModule
 

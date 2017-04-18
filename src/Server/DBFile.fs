@@ -115,7 +115,7 @@ module Assignments =
             logger.error (eventX "Save failed with exception" >> addExn exn)
 
 module Upload =
-    let write fileText ctx=
+    let coursework fileText ctx=
         try
             
             let filename = "attempt1"
@@ -133,6 +133,18 @@ module Upload =
                 @"..\..\..\..\..\..\..\..\..\..\packages\FSharp.Compiler.Tools\Tools\fsc.exe "+
                 filename+".fs"+" --standalone -o "+filename+".exe \n"+
                 filename)
+
+        with exn ->
+            logger.error (eventX "Save failed with exception" >> addExn exn)
+
+    let testbench fileText filePath =
+        try
+            
+            let fi = FileInfo(filePath)
+
+            if not fi.Directory.Exists then
+                fi.Directory.Create()
+            File.WriteAllText(filePath,fileText)
 
         with exn ->
             logger.error (eventX "Save failed with exception" >> addExn exn)

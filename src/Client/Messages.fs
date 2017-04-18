@@ -34,7 +34,7 @@ type ModulesMsg =
 
 /// The messages processed module 
 type ModuleMsg =
-  | SetActiveTab of Tab
+  | SetActiveTab of ModuleTab
   | FetchedModule of ModuleRow
   | FetchedAssignments of AssignmentTable
   | NewAssignmentChanged of AssignmentRow
@@ -45,7 +45,7 @@ type ModuleMsg =
   | FetchModuleError of exn
 
 type InitModule =
-    | ID of ID*Tab
+    | ID of ID*ModuleTab
     | Row of ModuleRow
 
 /// The messages processed tutorials 
@@ -65,11 +65,15 @@ type AssignmentsMsg =
 
 /// The messages processed coursework 
 type CourseworkMsg =
-  | ClickUpload
+  | ClickUploadCoursework
+  | ClickUploadTB
   | UploadSuccess of string
-  | SetUploadFile of Fable.Import.Browser.FileList//of string
+  | SetCourseworkFile of Fable.Import.Browser.FileList//of string
+  | SetTBFile of Fable.Import.Browser.FileList//of string
+  | SetTBForm of Fable.Import.Browser.HTMLFormElement//of string
   | FetchedCoursework of StudentCoursework//string//Fable.Import.Browser.File
   | FetchCourseworkError of exn
+  | SetActiveTab of CourseworkTab
   | UploadError of exn
 
 /// The messages processed online test 
@@ -85,7 +89,8 @@ type AppMsg =
   | OpenLogIn
   | OpenModuleWithStudent of ID*User
   | OpenModuleWithRow of ModuleRow
-  | OpenModuleWithID of ID*Tab
+  | OpenModuleWithID of ID*ModuleTab
+  | OpenCourseworkWithStudent of ID*ID*User
   | OpenCoursework of AssignmentRow
   | LoginMsg of LoginMsg
   | WishListMsg of WishListMsg

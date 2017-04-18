@@ -16,7 +16,7 @@ let logger = Log.create "FableSample"
 
 /// Handle the POST on /api/upload
 module Upload =
-    let post (ctx: HttpContext) =
+    let coursework (ctx: HttpContext) =
         Auth.useToken ctx (fun token -> async {
             try
                 logger.debug (eventX "santi debug file upload")
@@ -33,7 +33,7 @@ module Upload =
 
                 let filePath = "./"+dirPath+filename
 
-                DBFile.Upload.write fileText ctx
+                DBFile.Upload.coursework fileText ctx
 
                 let cmdOut = Processes.runScript (filePath+".cmd")
 
@@ -47,6 +47,35 @@ module Upload =
                 DBFile.Coursework.write coursework ctx
                 
                 return! Successful.OK ( "upload successful" ) ctx//(dirPath+"attempt1.cmd")  "file uploaded correctly" ctx
+
+            with exn ->
+                logger.error (eventX "Database not available" >> addExn exn)
+                return! SERVICE_UNAVAILABLE "Database not available" ctx
+        })    
+
+    let testbench (ctx: HttpContext) =
+        Auth.useToken ctx (fun token -> async {
+            try
+                logger.debug (eventX "santi debug testbench upload")
+                logger.debug (eventX ("headers length "+ctx.request.headers.Length.ToString()))
+                logger.debug (eventX ("form length "+ctx.request.form.Length.ToString()))
+                logger.debug (eventX ("files length "+ctx.request.files.Length.ToString()))
+
+                return! Successful.OK "Nom nom nom!" ctx
+
+                //let fileText =
+                //    match ctx.request.form.Head with
+                //    | a,_ -> a
+
+                //let dirPath = DBFile.Path.uploadDir ctx
+
+                //let filename = "tb.zip"
+
+                //let filePath = "./"+dirPath+filename
+
+                //DBFile.Upload.testbench fileText filePath
+
+                
 
             with exn ->
                 logger.error (eventX "Database not available" >> addExn exn)
@@ -128,7 +157,7 @@ module Assignments =
                 return! SERVICE_UNAVAILABLE "Database not available" ctx
         })
 
-    /// Handle the POST on /api/assignments
+    /// Handle the POST on /api/assignments/
     let post (ctx: HttpContext) =
         Auth.useToken ctx (fun token -> async {
             try
