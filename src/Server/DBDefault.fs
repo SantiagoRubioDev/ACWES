@@ -60,9 +60,16 @@ let userList:UserTable =
                  Type = "Teacher" 
                  ModulesID = [  "EE-430" ;  "EE-260" ] } } ] 
 
-let coursework : StudentCoursework =
+let courseworkStudent : StudentCoursework =
     { AssignmentID = ""
       State = ""
       CmdOut = ""
       Feedback = ""
       Grade = ""}
+
+let courseworkTeacher : TeacherCoursework =
+    { AssignmentID = ""
+      State = ""
+      TBtext = ""
+      ModelAnswertext = ""
+      SampleCodetext = ""}

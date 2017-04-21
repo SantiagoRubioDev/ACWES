@@ -232,7 +232,21 @@ type StudentCoursework =
           State = ""
           CmdOut = ""
           Feedback = ""
-          Grade = ""}
+          Grade = "" }
+
+type TeacherCoursework =
+    { AssignmentID: ID
+      State: string
+      TBtext: string
+      ModelAnswertext: string
+      SampleCodetext: string }
+
+    static member New id= 
+        { AssignmentID = id
+          State = ""
+          TBtext = ""
+          ModelAnswertext = ""
+          SampleCodetext = "" }
 
 (*
 type AssignmentHead =

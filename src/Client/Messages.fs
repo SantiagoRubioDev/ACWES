@@ -63,18 +63,28 @@ type AssignmentsMsg =
   | NO
   | YES
 
-/// The messages processed coursework 
+/// The messages processed coursework
 type CourseworkMsg =
+  | SetActiveTab of CourseworkTab
+  //coursework
+  | SetCourseworkFile of Fable.Import.Browser.FileList
   | ClickUploadCoursework
-  | ClickUploadTB
-  | UploadSuccess of string
-  | SetCourseworkFile of Fable.Import.Browser.FileList//of string
-  | SetTBFile of Fable.Import.Browser.FileList//of string
-  | SetTBForm of Fable.Import.Browser.HTMLFormElement//of string
+  | ReadCourseworkSuccess of string
+  | ReadCourseworkError of exn
+  | UploadCourseworkSuccess of string
+  | UploadCourseworkError of exn
   | FetchedCoursework of StudentCoursework//string//Fable.Import.Browser.File
   | FetchCourseworkError of exn
-  | SetActiveTab of CourseworkTab
-  | UploadError of exn
+  //Test Bench
+  | SetTBFiles of Fable.Import.Browser.FileList
+  | ClickUploadTB
+  | ReadTBSuccess of string
+  | ReadTBError of exn
+  | UploadTBSuccess of string
+  | UploadTBError of exn
+  | FetchedTB of TeacherCoursework
+  | FetchTBError of exn
+
 
 /// The messages processed online test 
 type OnlineTestMsg =

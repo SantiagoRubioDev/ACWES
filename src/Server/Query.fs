@@ -20,3 +20,15 @@ let useUserName (ctx: HttpContext) =
     | Choice1Of2 id -> id
     | _ -> "fail"
 
+///?FileName=
+let useFileName (ctx: HttpContext) =
+    match ctx.request.queryParam "FileName" with
+    | Choice1Of2 id -> id
+    | _ -> "fail"
+
+//&CourseworkState=
+let useState (ctx: HttpContext) =
+    match ctx.request.queryParam "State" with
+    | Choice1Of2 id -> id
+    | _ -> "fail"
+

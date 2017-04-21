@@ -42,7 +42,9 @@ let startServer clientPath =
                 
                 path "/api/assignments/" >=> RestAPI.Assignments.get 
                 
-                path "/api/coursework/" >=> RestAPI.Coursework.get
+                path "/api/coursework/student/" >=> RestAPI.Coursework.getStudent
+
+                path "/api/coursework/teacher/" >=> RestAPI.Coursework.getTeacher
                 
                 path "/api/users/students/" >=> RestAPI.Users.getStudents  ]
 

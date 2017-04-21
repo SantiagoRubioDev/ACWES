@@ -12,8 +12,10 @@ let logger = Log.create "FableSample"
 
 //get path for upload download and others
 module Path =
-    let uploadDir ctx = "temp/db/modules/"+(Query.useModuleId ctx)+"/assignments/"+
+    let uploadDirStudent ctx = "temp/db/modules/"+(Query.useModuleId ctx)+"/assignments/"+
                                      (Query.useAssignmentId ctx)+"/students/"+(Query.useUserName ctx)+"/"
+    let uploadDirTB ctx = "temp/db/modules/"+(Query.useModuleId ctx)+"/assignments/"+
+                                     (Query.useAssignmentId ctx)+"/TB/"
 //get file name path
 module JSONFileName =
 
@@ -23,7 +25,9 @@ module JSONFileName =
 
     let users = "./temp/db/users.json"
 
-    let coursework ctx = (Path.uploadDir ctx)+"coursework.json"
+    let courseworkStudent ctx = (Path.uploadDirStudent ctx)+"courseworkStudent.json"
+
+    let courseworkTeacher ctx = (Path.uploadDirTB ctx)+"courseworkTeacher.json"
 
 module Users =
     
@@ -120,7 +124,7 @@ module Upload =
             
             let filename = "attempt1"
 
-            let filePath = "./"+(Path.uploadDir ctx)+filename
+            let filePath = "./"+(Path.uploadDirStudent ctx)+filename
 
             let fi = FileInfo(filePath)
 
@@ -149,19 +153,38 @@ module Upload =
         with exn ->
             logger.error (eventX "Save failed with exception" >> addExn exn)
 
-module Coursework =
+module StudentCoursework =
     
     let read ctx=
-        let fi = FileInfo(JSONFileName.coursework ctx)
+        let fi = FileInfo(JSONFileName.courseworkStudent ctx)
         if not fi.Exists then
-            DBDefault.coursework
+            DBDefault.courseworkStudent
         else
             File.ReadAllText(fi.FullName)
             |> JsonConvert.DeserializeObject<StudentCoursework>
 
     let write (coursework:StudentCoursework) ctx =
         try
-            let fi = FileInfo(JSONFileName.coursework ctx)
+            let fi = FileInfo(JSONFileName.courseworkStudent ctx)
+            if not fi.Directory.Exists then
+                fi.Directory.Create()
+            File.WriteAllText(fi.FullName,JsonConvert.SerializeObject coursework)
+        with exn ->
+            logger.error (eventX "Save failed with exception" >> addExn exn)
+
+module TeacherCoursework =
+    
+    let read ctx=
+        let fi = FileInfo(JSONFileName.courseworkTeacher ctx)
+        if not fi.Exists then
+            DBDefault.courseworkTeacher
+        else
+            File.ReadAllText(fi.FullName)
+            |> JsonConvert.DeserializeObject<TeacherCoursework>
+
+    let write (coursework:TeacherCoursework) ctx =
+        try
+            let fi = FileInfo(JSONFileName.courseworkTeacher ctx)
             if not fi.Directory.Exists then
                 fi.Directory.Create()
             File.WriteAllText(fi.FullName,JsonConvert.SerializeObject coursework)

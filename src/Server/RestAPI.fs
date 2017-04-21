@@ -23,11 +23,12 @@ module Upload =
                 logger.debug (eventX ("headers length "+ctx.request.headers.Length.ToString()))
                 logger.debug (eventX ("form length "+ctx.request.form.Length.ToString()))
 
-                let fileText =
-                    match ctx.request.form.Head with
-                    | a,_ -> a//logger.debug (eventX ("form head type "+a+" ;;;;; "+( if b.IsSome then b.Value else "None")))
+                let fileText : string = 
+                    ctx.request.rawForm
+                    |> System.Text.Encoding.UTF8.GetString
+                    |> JsonConvert.DeserializeObject<string>
 
-                let dirPath = DBFile.Path.uploadDir ctx
+                let dirPath = DBFile.Path.uploadDirStudent ctx
 
                 let filename = "attempt1"
 
@@ -44,7 +45,7 @@ module Upload =
                       Feedback = "Good Job"
                       Grade = "A" }
 
-                DBFile.Coursework.write coursework ctx
+                DBFile.StudentCoursework.write coursework ctx
                 
                 return! Successful.OK ( "upload successful" ) ctx//(dirPath+"attempt1.cmd")  "file uploaded correctly" ctx
 
@@ -54,6 +55,7 @@ module Upload =
         })    
 
     let testbench (ctx: HttpContext) =
+        logger.debug (eventX "start testbench")
         Auth.useToken ctx (fun token -> async {
             try
                 logger.debug (eventX "santi debug testbench upload")
@@ -61,21 +63,20 @@ module Upload =
                 logger.debug (eventX ("form length "+ctx.request.form.Length.ToString()))
                 logger.debug (eventX ("files length "+ctx.request.files.Length.ToString()))
 
+                let fileText : string = 
+                    ctx.request.rawForm
+                    |> System.Text.Encoding.UTF8.GetString
+                    |> JsonConvert.DeserializeObject<string>
+
+                let dirPath = DBFile.Path.uploadDirTB ctx
+
+                let filename = Query.useFileName ctx
+
+                let filePath = "./"+dirPath+filename
+
+                DBFile.Upload.testbench fileText filePath
+
                 return! Successful.OK "Nom nom nom!" ctx
-
-                //let fileText =
-                //    match ctx.request.form.Head with
-                //    | a,_ -> a
-
-                //let dirPath = DBFile.Path.uploadDir ctx
-
-                //let filename = "tb.zip"
-
-                //let filePath = "./"+dirPath+filename
-
-                //DBFile.Upload.testbench fileText filePath
-
-                
 
             with exn ->
                 logger.error (eventX "Database not available" >> addExn exn)
@@ -183,13 +184,27 @@ module Assignments =
         })    
 
 module Coursework =
-    /// Handle the GET on /api/coursework
-    let get (ctx: HttpContext) =
+    /// Handle the GET on /api/coursework/student/
+    let getStudent (ctx: HttpContext) =
         Auth.useToken ctx (fun token -> async {
             try
-                let coursework = DBFile.Coursework.read ctx//token.UserName
+                let coursework = DBFile.StudentCoursework.read ctx//token.UserName
                 if coursework.AssignmentID = "" then
-                    return! INTERNAL_ERROR "Please upload your coursework" ctx
+                    return! INTERNAL_ERROR "Please upload your coursework" ctx //the string message is not sent to the client only INTERNAL_ERROR 500 is
+                else
+                    return! Successful.OK (JsonConvert.SerializeObject coursework) ctx
+            with exn ->
+                logger.error (eventX "SERVICE_UNAVAILABLE" >> addExn exn)
+                return! SERVICE_UNAVAILABLE "Database not available" ctx
+        })
+
+    /// Handle the GET on /api/coursework/teacher/
+    let getTeacher (ctx: HttpContext) =
+        Auth.useToken ctx (fun token -> async {
+            try
+                let coursework = DBFile.TeacherCoursework.read ctx//token.UserName
+                if coursework.AssignmentID = "" then
+                    return! INTERNAL_ERROR "Please upload your coursework" ctx //the string message is not sent to the client only INTERNAL_ERROR 500 is
                 else
                     return! Successful.OK (JsonConvert.SerializeObject coursework) ctx
             with exn ->
