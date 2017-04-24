@@ -122,7 +122,7 @@ module Upload =
     let coursework fileText ctx=
         try
             
-            let filename = "attempt1"
+            let filename = "StudentsAnswers"
 
             let filePath = "./"+(Path.uploadDirStudent ctx)+filename
 
@@ -132,11 +132,11 @@ module Upload =
                 fi.Directory.Create()
             File.WriteAllText(filePath+".fs",fileText)
 
-            File.WriteAllText(filePath+".cmd","@echo off \n"+
+            (*File.WriteAllText(filePath+".cmd","@echo off \n"+
                 "cls \n \n"+
                 @"..\..\..\..\..\..\..\..\..\..\packages\FSharp.Compiler.Tools\Tools\fsc.exe "+
                 filename+".fs"+" --standalone -o "+filename+".exe \n"+
-                filename)
+                filename)*)
 
         with exn ->
             logger.error (eventX "Save failed with exception" >> addExn exn)
@@ -188,5 +188,52 @@ module TeacherCoursework =
             if not fi.Directory.Exists then
                 fi.Directory.Create()
             File.WriteAllText(fi.FullName,JsonConvert.SerializeObject coursework)
+        with exn ->
+            logger.error (eventX "Save failed with exception" >> addExn exn)
+
+module Coursework =
+    
+    let createRunBox ctx=
+        try
+            
+            let dirname = "RunBox/"
+
+            let projname = "DotNet.fsproj"
+             
+            let refname = "paket.references"
+
+            let dirPath = "./"+(Path.uploadDirStudent ctx)+dirname
+
+            let fiproj = FileInfo(dirPath+projname)
+            let firef = FileInfo(dirPath+refname)
+            if not fiproj.Directory.Exists then
+                fiproj.Directory.Create()
+            File.WriteAllText(firef.FullName,"group Test \nFSharp.Core")
+            File.WriteAllText(fiproj.FullName,"<Project Sdk=\"FSharp.NET.Sdk;Microsoft.NET.Sdk\">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp1.1</TargetFramework>
+  </PropertyGroup>
+
+
+  <ItemGroup>
+    <Compile Include=\"..\..\..\TB\ModelAnswers.fs\" />
+    <Compile Include=\"..\StudentsAnswers.fs\" />
+    <Compile Include=\"..\..\..\TB\TestBench.fs\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include=\"FSharp.NET.Sdk\" Version=\"1.0.0-beta-060000\" PrivateAssets=\"All\" />
+    <DotNetCliToolReference Include=\"dotnet-compile-fsc\" Version=\"1.0.0-preview2-020000\" />
+    <EmbeddedResource Include=\"**\*.resx\" />
+    <DotNetCliToolReference Include=\"Microsoft.DotNet.Watcher.Tools\" Version=\"1.0.0\" />
+  </ItemGroup>
+  <Import Project=\"..\..\..\..\..\..\..\..\..\..\..\.paket\Paket.Restore.targets\" />
+
+
+</Project>")
+
+
         with exn ->
             logger.error (eventX "Save failed with exception" >> addExn exn)

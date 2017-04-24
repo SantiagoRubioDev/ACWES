@@ -86,6 +86,9 @@
     <!--<Compile Include="../Server/Modules.fs" >
       <Link>Server/Modules.fs</Link>
     </Compile>-->
+    <Compile Include="../Server/TestBench.fs" >
+      <Link>Server/TestBench.fs</Link>
+    </Compile>
     <Compile Include="../Server/RestAPI.fs" >
       <Link>Server/RestAPI.fs</Link>
     </Compile>

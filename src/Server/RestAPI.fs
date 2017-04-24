@@ -30,13 +30,15 @@ module Upload =
 
                 let dirPath = DBFile.Path.uploadDirStudent ctx
 
-                let filename = "attempt1"
+                let filename = "StudentsAnswers"
 
                 let filePath = "./"+dirPath+filename
 
                 DBFile.Upload.coursework fileText ctx
 
-                let cmdOut = Processes.runScript (filePath+".cmd")
+                DBFile.Coursework.createRunBox ctx
+
+                let cmdOut = Processes.runTB ("./"+dirPath+"RunBox/DotNet.fsproj")
 
                 let coursework = 
                     { AssignmentID = Query.useAssignmentId ctx
