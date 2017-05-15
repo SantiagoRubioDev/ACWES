@@ -38,16 +38,46 @@ module Upload =
 
                 DBFile.Coursework.createRunBox ctx
 
-                let cmdOut = Processes.runTB ("./"+dirPath+"RunBox/DotNet.fsproj")
-
                 let coursework = 
                     { AssignmentID = Query.useAssignmentId ctx
-                      State = "Run Success: Done"
-                      CmdOut = cmdOut
+                      State = "Upload Success: now  building"
+                      CmdOut = ""
                       Feedback = "Good Job"
                       Grade = "A" }
 
-                DBFile.StudentCoursework.write coursework ctx
+                DBFile.StudentCoursework.write coursework ctx 
+
+                let asyncCompileRun () =
+                    async{
+                        let cmd = Processes.runTB ("./"+dirPath+"RunBox/DotNet.fsproj")
+
+                        //Compile
+                        let cmdOut = cmd "dotnet restore" + cmd "dotnet build"
+
+                        let coursework = 
+                            { AssignmentID = Query.useAssignmentId ctx
+                              State = "Compile Success: Done"
+                              CmdOut = cmdOut
+                              Feedback = "Good Job"
+                              Grade = "A" }
+
+                        DBFile.StudentCoursework.write coursework ctx
+
+
+                        //Run
+                        let cmdOut = cmdOut + cmd "dotnet run"
+
+                        let coursework = 
+                            { AssignmentID = Query.useAssignmentId ctx
+                              State = "Run Success: Done"
+                              CmdOut = cmdOut
+                              Feedback = "Good Job"
+                              Grade = "A" }
+
+                        DBFile.StudentCoursework.write coursework ctx
+                    }
+
+                Async.Start ( asyncCompileRun() )
                 
                 return! Successful.OK ( "upload successful" ) ctx//(dirPath+"attempt1.cmd")  "file uploaded correctly" ctx
 
@@ -190,10 +220,14 @@ module Coursework =
     let getStudent (ctx: HttpContext) =
         Auth.useToken ctx (fun token -> async {
             try
+
                 let coursework = DBFile.StudentCoursework.read ctx//token.UserName
                 if coursework.AssignmentID = "" then
                     return! INTERNAL_ERROR "Please upload your coursework" ctx //the string message is not sent to the client only INTERNAL_ERROR 500 is
                 else
+
+                    do! Async.Sleep 1000 // 1 second wait because this will be called often during coursework upload
+                    
                     return! Successful.OK (JsonConvert.SerializeObject coursework) ctx
             with exn ->
                 logger.error (eventX "SERVICE_UNAVAILABLE" >> addExn exn)

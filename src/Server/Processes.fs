@@ -33,7 +33,7 @@ let runScript commandPath =
     out
 
 //run a .fsproj script
-let runTB runBoxPath = 
+let runTB runBoxPath _command = 
     
     let cmd command =
         logger.debug (eventX "run project start")
@@ -59,7 +59,7 @@ let runTB runBoxPath =
 
         out
 
-
-    cmd "dotnet restore"+
-        cmd "dotnet build"+
-        cmd "dotnet run"
+    cmd _command
+    //cmd "dotnet restore"+
+    //    cmd "dotnet build"+
+    //    cmd "dotnet run"
