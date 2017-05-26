@@ -59,6 +59,8 @@ let startServer clientPath =
 
                 path "/api/upload/testbench/" >=> RestAPI.Upload.testbench
 
+                path "/api/upload/spec/" >=> RestAPI.Upload.spec
+
                 path "/api/user/assignmodule/" >=> RestAPI.Users.assignModule
 
                 path "/api/assignments/" >=> RestAPI.Assignments.post

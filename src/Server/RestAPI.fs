@@ -42,8 +42,8 @@ module Upload =
                     { AssignmentID = Query.useAssignmentId ctx
                       State = "Upload Success: now  building"
                       CmdOut = ""
-                      Feedback = "Good Job"
-                      Grade = "A" }
+                      Feedback = ""
+                      Grade = "" }
 
                 DBFile.StudentCoursework.write coursework ctx 
 
@@ -58,8 +58,8 @@ module Upload =
                             { AssignmentID = Query.useAssignmentId ctx
                               State = "Compile Success: Done"
                               CmdOut = cmdOut
-                              Feedback = "Good Job"
-                              Grade = "A" }
+                              Feedback = ""
+                              Grade = "" }
 
                         DBFile.StudentCoursework.write coursework ctx
 
@@ -67,12 +67,34 @@ module Upload =
                         //Run
                         let cmdOut = cmdOut + cmd "dotnet run"
 
+                        let mark_pc = (((cmdOut.Substring(cmdOut.LastIndexOf("Mark")+4)).Split(' ')) 
+                                        |> Array.toList
+                                        |> List.filter ((<>) "")).[0] |> int //get first word ("number") after id mark
+
+                        let mark = 
+                            if mark_pc < 40 then
+                                "E"
+                            elif mark_pc < 50 then
+                                "D"
+                            elif mark_pc < 60 then
+                                "C"
+                            elif mark_pc < 70 then
+                                "B"
+                            elif mark_pc < 80 then
+                                "A"
+                            else
+                                "A*"
+
+                        let feedback = (cmdOut.Substring(cmdOut.LastIndexOf("Feedback")+8)).Replace('"',' ') //get string after id feedback
+
+
+
                         let coursework = 
                             { AssignmentID = Query.useAssignmentId ctx
                               State = "Run Success: Done"
-                              CmdOut = cmdOut
-                              Feedback = "Good Job"
-                              Grade = "A" }
+                              CmdOut = cmdOut.Substring(0,cmdOut.LastIndexOf("Mark"))
+                              Feedback = feedback
+                              Grade = mark }
 
                         DBFile.StudentCoursework.write coursework ctx
                     }
@@ -107,6 +129,58 @@ module Upload =
                 let filePath = "./"+dirPath+filename
 
                 DBFile.Upload.testbench fileText filePath
+
+                let pevTeacherCoursework = DBFile.TeacherCoursework.read ctx//token.UserName
+
+                let newTeacherCoursework = { AssignmentID = Query.useAssignmentId ctx
+                                             State = "Upload Success: great success"
+                                             TBtext = if (Query.useFileName ctx) = "TestBench" then fileText else pevTeacherCoursework.TBtext
+                                             ModelAnswertext = if (Query.useFileName ctx) = "ModelAnswers" then fileText else pevTeacherCoursework.ModelAnswertext
+                                             SampleCodetext = if (Query.useFileName ctx) = "StudentsAnswers" || (Query.useFileName ctx) = "StudentsSample"  then fileText else pevTeacherCoursework.SampleCodetext
+                                             Spectext = pevTeacherCoursework.Spectext }
+
+                DBFile.TeacherCoursework.write newTeacherCoursework ctx
+                
+
+                return! Successful.OK "Nom nom nom!" ctx
+
+            with exn ->
+                logger.error (eventX "Database not available" >> addExn exn)
+                return! SERVICE_UNAVAILABLE "Database not available" ctx
+        })    
+
+    let spec (ctx: HttpContext) =
+        logger.debug (eventX "start spec")
+        Auth.useToken ctx (fun token -> async {
+            try
+                logger.debug (eventX "santi debug spec upload")
+                logger.debug (eventX ("headers length "+ctx.request.headers.Length.ToString()))
+                logger.debug (eventX ("form length "+ctx.request.form.Length.ToString()))
+                logger.debug (eventX ("files length "+ctx.request.files.Length.ToString()))
+
+                let fileText : string = 
+                    ctx.request.rawForm
+                    |> System.Text.Encoding.UTF8.GetString
+                    |> JsonConvert.DeserializeObject<string>
+
+                let dirPath = DBFile.Path.uploadDirTB ctx
+
+                let filename = "Spec.txt"
+
+                let filePath = "./"+dirPath+filename
+
+                DBFile.Upload.testbench fileText filePath
+
+                let pevTeacherCoursework = DBFile.TeacherCoursework.read ctx//token.UserName
+
+                let newTeacherCoursework = { AssignmentID = Query.useAssignmentId ctx
+                                             State = "Upload Success: great success"
+                                             TBtext = pevTeacherCoursework.TBtext
+                                             ModelAnswertext = pevTeacherCoursework.ModelAnswertext
+                                             SampleCodetext = pevTeacherCoursework.SampleCodetext
+                                             Spectext = fileText }
+
+                DBFile.TeacherCoursework.write newTeacherCoursework ctx
 
                 return! Successful.OK "Nom nom nom!" ctx
 

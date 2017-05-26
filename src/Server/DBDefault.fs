@@ -72,4 +72,5 @@ let courseworkTeacher : TeacherCoursework =
       State = ""
       TBtext = ""
       ModelAnswertext = ""
-      SampleCodetext = ""}
+      SampleCodetext = ""
+      Spectext = ""}

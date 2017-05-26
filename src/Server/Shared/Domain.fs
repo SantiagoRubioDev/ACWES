@@ -239,14 +239,16 @@ type TeacherCoursework =
       State: string
       TBtext: string
       ModelAnswertext: string
-      SampleCodetext: string }
+      SampleCodetext: string
+      Spectext: string }
 
     static member New id= 
         { AssignmentID = id
           State = ""
           TBtext = ""
           ModelAnswertext = ""
-          SampleCodetext = "" }
+          SampleCodetext = ""
+          Spectext = "" }
 
 (*
 type AssignmentHead =

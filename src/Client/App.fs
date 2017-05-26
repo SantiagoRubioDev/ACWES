@@ -283,7 +283,7 @@ let viewPage model dispatch =
           words 15 "Automated CourseWork Evaluation Service"
           words 20 "The service provided by Imperial College that helps marking assignements and give students useful feedback instantaneously."
           //a [ Href "http://localhost:8080/#login" ] [ words 15 "Please login using your Imperial College ID" ]
-          div [ ClassName "" ][
+          div [ ClassName ""; Id "demo"][
             //div [ ClassName "" ] [ text (if model.Menu.User.IsSome then (model.Menu.User.Value.UserName+" you have 3 unfinished deliverables due in the following 5 days") else "Please") ; a [Href "http://localhost:8080/#login" ] [text " log in"]; text " using your College ID" ]
             div [ ClassName (if model.Menu.User.IsSome then "" else "hide") ] [ text (if model.Menu.User.IsSome then (model.Menu.User.Value.UserName+" you have "+(string)(deliverablesInTheNextDays 5)+" unfinished deliverables due in the following 5 days") else "") ]
             div [ ClassName (if model.Menu.User.IsSome then "hide" else "") ] [ text "Please" ; a [Href "http://localhost:8080/#login" ] [text " log in"]; text " using your College ID" ]        

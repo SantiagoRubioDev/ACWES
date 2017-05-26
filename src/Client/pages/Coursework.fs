@@ -69,23 +69,28 @@ type CourseworkType =
 
 type TBType = 
     { State : TBUploadState
-      Files : FileUploadType list option
+      TBFiles : FileUploadType list option
+      SpecFile : FileUploadType list option
       TB : TeacherCoursework }
     static member New assignmentId = 
         { State = Default
-          Files = None 
+          TBFiles = None
+          SpecFile = None
           TB = { AssignmentID = assignmentId
                  State = ""
                  TBtext = ""
                  ModelAnswertext = ""
-                 SampleCodetext = ""  } }
+                 SampleCodetext = ""  
+                 Spectext = ""} }
     member this.withNewState newState = 
         { State = newState
-          Files = this.Files
+          TBFiles = this.TBFiles
+          SpecFile = this.SpecFile
           TB = this.TB }
     member this.withNewStateandTB newState newTB = 
         { State = newState
-          Files = this.Files 
+          TBFiles = this.TBFiles
+          SpecFile = this.SpecFile
           TB = newTB}
 
 /////---------------------------------------------------------------------MODEL---------------------------------------------------------------------/////
@@ -209,7 +214,7 @@ let getTB (model:Model) =
             [ RequestProperties.Headers [
                 HttpRequestHeaders.Authorization ("Bearer " + model.User.Token) ]]
 
-        return! Fable.PowerPack.Fetch.fetchAs<StudentCoursework> url props
+        return! Fable.PowerPack.Fetch.fetchAs<TeacherCoursework> url props
     }
 
 let postTB (fiName,(model:Model)) =
@@ -218,15 +223,15 @@ let postTB (fiName,(model:Model)) =
                   "&AssignmentId="+model.AssignmentID+"&UserName="+model.User.UserName+
                   "&FileName="+fiName
 
-        Browser.console.log("reader state: "+(model.TB.Files.Value.[0].Reader.readyState.ToString()))
+        Browser.console.log("reader state: "+(model.TB.TBFiles.Value.[0].Reader.readyState.ToString()))
 
         let body = //toJson (model.TBUpload.Files.Value.Head.Reader.result.ToString())
-            if fiName = model.TB.Files.Value.[0].File.name
-            then toJson (model.TB.Files.Value.[0].Reader.result.ToString())
-            elif fiName = model.TB.Files.Value.[1].File.name
-            then toJson (model.TB.Files.Value.[1].Reader.result.ToString())
-            elif fiName = model.TB.Files.Value.[2].File.name
-            then toJson (model.TB.Files.Value.[2].Reader.result.ToString())
+            if fiName = model.TB.TBFiles.Value.[0].File.name
+            then toJson (model.TB.TBFiles.Value.[0].Reader.result.ToString())
+            elif fiName = model.TB.TBFiles.Value.[1].File.name
+            then toJson (model.TB.TBFiles.Value.[1].Reader.result.ToString())
+            elif fiName = model.TB.TBFiles.Value.[2].File.name
+            then toJson (model.TB.TBFiles.Value.[2].Reader.result.ToString())
             else 
                 Browser.console.log("ERROR in postTB fiName: "+fiName)
                 toJson Browser.File.prototype //should never happen
@@ -256,26 +261,26 @@ let postTB (fiName,(model:Model)) =
 let readTB (model:Model) =
     async {
         
-        Browser.console.log("tbfilse length: "+(model.TB.Files.Value.Length.ToString()))        
+        Browser.console.log("tbfilse length: "+(model.TB.TBFiles.Value.Length.ToString()))        
         try
             
-            model.TB.Files.Value.[0].Reader.readAsText(model.TB.Files.Value.[0].File) //testbench
-            model.TB.Files.Value.[1].Reader.readAsText(model.TB.Files.Value.[1].File) //modelanswer
-            model.TB.Files.Value.[2].Reader.readAsText(model.TB.Files.Value.[2].File) //sudentanswer
+            model.TB.TBFiles.Value.[0].Reader.readAsText(model.TB.TBFiles.Value.[0].File) //testbench
+            model.TB.TBFiles.Value.[1].Reader.readAsText(model.TB.TBFiles.Value.[1].File) //modelanswer
+            model.TB.TBFiles.Value.[2].Reader.readAsText(model.TB.TBFiles.Value.[2].File) //sudentanswer
 
             let mutable count = 0
 
-            while ( model.TB.Files.Value.[0].Reader.readyState <> model.TB.Files.Value.[0].Reader.DONE
-                  || model.TB.Files.Value.[1].Reader.readyState <> model.TB.Files.Value.[1].Reader.DONE
-                  || model.TB.Files.Value.[2].Reader.readyState <> model.TB.Files.Value.[2].Reader.DONE )
+            while ( model.TB.TBFiles.Value.[0].Reader.readyState <> model.TB.TBFiles.Value.[0].Reader.DONE
+                  || model.TB.TBFiles.Value.[1].Reader.readyState <> model.TB.TBFiles.Value.[1].Reader.DONE
+                  || model.TB.TBFiles.Value.[2].Reader.readyState <> model.TB.TBFiles.Value.[2].Reader.DONE )
                   && count < 1000 do
                 count <- count + 2
                 do! Async.Sleep(2)
 
             Browser.console.log("counter is: "+count.ToString())
-            if model.TB.Files.Value.[0].Reader.readyState = model.TB.Files.Value.[0].Reader.DONE
-               && model.TB.Files.Value.[1].Reader.readyState = model.TB.Files.Value.[1].Reader.DONE
-               && model.TB.Files.Value.[2].Reader.readyState = model.TB.Files.Value.[2].Reader.DONE then
+            if model.TB.TBFiles.Value.[0].Reader.readyState = model.TB.TBFiles.Value.[0].Reader.DONE
+               && model.TB.TBFiles.Value.[1].Reader.readyState = model.TB.TBFiles.Value.[1].Reader.DONE
+               && model.TB.TBFiles.Value.[2].Reader.readyState = model.TB.TBFiles.Value.[2].Reader.DONE then
                 return "read successfully"
             else   
                 return! failwith "Failed read: it took to long your file is too big"
@@ -293,6 +298,74 @@ let postTBCmd fiName model =
 
 let getTBCmd model = 
     Cmd.ofPromise getTB model FetchedTB FetchTBError
+
+
+
+
+//Spec
+
+let postSpec (model:Model) =
+    promise {        
+        let url = "/api/upload/spec/?ModuleId="+model.Assignment.ModuleID+
+                  "&AssignmentId="+model.AssignmentID+"&UserName="+model.User.UserName
+
+        Browser.console.log("reader state: "+(model.TB.SpecFile.Value.[0].Reader.readyState.ToString()))
+
+        let body = toJson (model.TB.SpecFile.Value.[0].Reader.result.ToString())
+
+        let props = 
+            [ RequestProperties.Method HttpMethod.POST
+              RequestProperties.Headers [
+                HttpRequestHeaders.Authorization ("Bearer " + model.User.Token)
+                //HttpRequestHeaders.ContentType "multipart/form-data" ]
+                HttpRequestHeaders.ContentType "application/json" ]
+              RequestProperties.Body ( unbox body ) ]
+
+        try
+
+            let! response = Fetch.fetch url props
+
+            if not response.Ok then
+                return! failwithf "Error: %d" response.Status
+            else    
+                let! data = response.text() 
+                return data
+        with
+        | _ -> return! failwithf "Could not upload file."
+        
+    }
+
+let readSpec (model:Model) =
+    async {
+        
+        //Browser.console.log("reader state: "+(model.TB.SpecFile.Value.[0].Reader.readyState.ToString()))        
+        try
+            
+            model.TB.SpecFile.Value.[0].Reader.readAsText(model.TB.SpecFile.Value.[0].File) //spec
+
+            let mutable count = 0
+
+            while ( model.TB.SpecFile.Value.[0].Reader.readyState <> model.TB.SpecFile.Value.[0].Reader.DONE )
+                  && count < 1000 do
+                count <- count + 2
+                do! Async.Sleep(2)
+
+            Browser.console.log("counter is: "+count.ToString())
+            if model.TB.SpecFile.Value.[0].Reader.readyState = model.TB.SpecFile.Value.[0].Reader.DONE then
+                return "read successfully"
+            else   
+                return! failwith "Failed read: it took to long your file is too big"
+
+        with
+        | e -> return! failwithf "Could not read file: %s" e.Message
+        
+    }
+
+let readSpecCmd model = 
+    Cmd.ofAsync readSpec model ReadSpecSuccess ReadSpecError
+
+let postSpecCmd fiName model = 
+    Cmd.ofPromise postSpec (model) UploadSpecSuccess UploadSpecError
 
 
 
@@ -379,13 +452,13 @@ let update (msg:CourseworkMsg) model : Model*Cmd<CourseworkMsg> =
     | CourseworkMsg.SetTBFiles f ->
         //not up to date (check for filenames and extensions .fs) 
         if f.length = 3.0 then
-            { model with TB = {model.TB with Files = Some [FileUploadType.addFile f.[0];FileUploadType.addFile f.[1];FileUploadType.addFile f.[2]] } }, Cmd.none
+            { model with TB = {model.TB with TBFiles = Some [FileUploadType.addFile f.[0];FileUploadType.addFile f.[1];FileUploadType.addFile f.[2]] } }, Cmd.none
         else
             { model with TB = model.TB.withNewState (Upload ( Failure "please choose exactly three files" ) ) } , Cmd.none
     | CourseworkMsg.ClickUploadTB -> 
         //not up to date (check postTBcmd)
-        if model.TB.Files.IsSome then
-            if model.TB.Files.Value.Length = 3 then
+        if model.TB.TBFiles.IsSome then
+            if model.TB.TBFiles.Value.Length = 3 then
                 { model with TB = model.TB.withNewState StartUpload }, readTBCmd model
             else
                 { model with TB = model.TB.withNewState ( Upload ( Failure "please choose exactly three file" ) ) } , Cmd.none
@@ -393,15 +466,17 @@ let update (msg:CourseworkMsg) model : Model*Cmd<CourseworkMsg> =
            { model with TB = model.TB.withNewState ( Upload ( Failure "please choose your files before pressing upload" ) ) } , Cmd.none
     | CourseworkMsg.ReadTBSuccess msg->
         //not up to date (everything)
-        { model with TB = model.TB.withNewState (Read (Success msg ) ) }, Cmd.batch [postTBCmd model.TB.Files.Value.[0].File.name model ; postTBCmd model.TB.Files.Value.[1].File.name model; postTBCmd model.TB.Files.Value.[2].File.name model]
+        { model with TB = model.TB.withNewState (Read (Success msg ) ) }, Cmd.batch [postTBCmd model.TB.TBFiles.Value.[0].File.name model ; postTBCmd model.TB.TBFiles.Value.[1].File.name model; postTBCmd model.TB.TBFiles.Value.[2].File.name model]
     | CourseworkMsg.ReadTBError error ->
         { model with TB = model.TB.withNewState ( Read ( Failure error.Message ) ) }, Cmd.none
     | CourseworkMsg.UploadTBSuccess res ->
         //not up to date (add getTBCmd)
-        { model with TB = model.TB.withNewState ( Upload ( Success res ) ) } , Cmd.none //getTBCmd model
+        { model with TB = model.TB.withNewState ( Upload ( Success res ) ) } , getTBCmd model
     | CourseworkMsg.UploadTBError error ->
         { model with TB = model.TB.withNewState ( Upload ( Failure error.Message ) ) }, Cmd.none
     | CourseworkMsg.FetchedTB res ->
+        Browser.console.log("FetchedTB: ")
+        Browser.console.log(res)
         let state, cmdNext = 
             match res.State with
             | Prefix "Upload Success: " msg -> TBUploadState.Upload (Success msg), getCourseworkCmd model   //check for compilation state
@@ -414,6 +489,35 @@ let update (msg:CourseworkMsg) model : Model*Cmd<CourseworkMsg> =
             | Prefix "500" _ -> "please upload file" //no tb has been uploaded yet
             | msg -> msg
         { model with TB = model.TB.withNewState ( TBUploadState.NotFound errorMsg ) }, Cmd.none
+    
+    //--Spec
+    | CourseworkMsg.SetSpecFile f ->
+        //not up to date (check for filenames and extensions .fs) 
+        if f.length = 1.0 then
+            { model with TB = {model.TB with SpecFile = Some [FileUploadType.addFile f.[0]] } }, Cmd.none
+        else
+            { model with TB = model.TB.withNewState (Upload ( Failure "please choose exactly one file" ) ) } , Cmd.none
+    | CourseworkMsg.ClickUploadSpec -> 
+        Browser.console.log(Fable.Import.Browser.document.getElementById("tas_Id"))
+        //Fable.Import.Browser.document.getElementById("tas_Id").setAttribute ("tas_Name",model.TB.TB.Spectext)
+        //not up to date (check postTBcmd)
+        if model.TB.SpecFile.IsSome then
+            if model.TB.SpecFile.Value.Length = 1 then
+                { model with TB = model.TB.withNewState StartUpload }, readSpecCmd model
+            else
+                { model with TB = model.TB.withNewState ( Upload ( Failure "please choose exactly one file" ) ) } , Cmd.none
+        else
+           { model with TB = model.TB.withNewState ( Upload ( Failure "please choose your file before pressing upload" ) ) } , Cmd.none
+    | CourseworkMsg.ReadSpecSuccess msg->
+        //not up to date (everything)
+        { model with TB = model.TB.withNewState (Read (Success msg ) ) }, postSpecCmd model.TB.SpecFile.Value.[0].File.name model
+    | CourseworkMsg.ReadSpecError error ->
+        { model with TB = model.TB.withNewState ( Read ( Failure error.Message ) ) }, Cmd.none
+    | CourseworkMsg.UploadSpecSuccess res ->
+        //not up to date (add getTBCmd)
+        { model with TB = model.TB.withNewState ( Upload ( Success res ) ) } , getTBCmd model
+    | CourseworkMsg.UploadSpecError error ->
+        { model with TB = model.TB.withNewState ( Upload ( Failure error.Message ) ) }, Cmd.none
     
     
 /////---------------------------------------------------------------------StateView---------------------------------------------------------------------/////
@@ -444,6 +548,8 @@ let TBstateView (state:TBUploadState) =
     | TBUploadState.Read (Failure msg) -> div [] [text ( "Read failed: "+msg) ]
     | TBUploadState.Upload (Failure msg) -> div [] [text ( "Upload failed: "+msg) ]
 
+let specTextArea specText= Fable.Helpers.React.textarea [Cols 200.0; Rows 200.0; Id "tas_Id";DefaultValue (U2.Case1 specText)] []//unbox model.TB.TB.Spectext ; DefaultValue (U2.Case1 specText)
+
 
 
 
@@ -457,9 +563,13 @@ let view (model:Model) (dispatch: AppMsg -> unit) =
 
     div [] [
         //bcak button
-        div [] [ button [ ClassName "btn btn-primary"; OnClick (fun _ -> dispatch (OpenModuleWithID (model.Assignment.ModuleID,ModuleTab.Assignments))) ] [ text "back" ]]
-        //Title
-        h4 [] [text ( model.Assignment.ModuleID + " - " + model.AssignmentID + " - " + model.Assignment.Title )]
+        div [] [
+            div [] [ button [ ClassName "btn btn-primary"; OnClick (fun _ -> dispatch (OpenModuleWithID (model.Assignment.ModuleID,ModuleTab.Assignments))) ] [ text "back" ]]
+            //Title
+            h4 [ ] [text ( model.Assignment.ModuleID + " - " + model.AssignmentID + " - " + model.Assignment.Title )]
+            div [Style [Margin "0 10px"; Float "right"]][words 40 model.Coursework.Coursework.Grade] ]
+        
+            
         //tab buttons
         div [ ClassName "tab" ] [
             tabButton "Initial" CourseworkTab.Initial true
@@ -477,9 +587,9 @@ let view (model:Model) (dispatch: AppMsg -> unit) =
         tabcontent (model.ActiveTab = CourseworkTab.Initial) [
                     
             //left side (spec)   
-            div [  Style [Float "left"; Padding "10px"; Height "720px"; CSSProp.Width "580px"; Border "1px solid #ccc"; Overflow "auto"]  ] 
+            div [  Style [ CSSProp.WhiteSpace "pre-line";Float "left"; Padding "10px"; Height "720px"; CSSProp.Width "580px"; Border "1px solid #ccc"; Overflow "auto"]  ] 
                 [ div [] [words 25 "Spec"]
-                  text "Write a function square x, which returns x^2."]
+                  text model.TB.TB.Spectext]
             
             //right side (upload, feedback, cmdout) 
             div [ Style [Float "right"; Padding "10px";  Height "720px"; CSSProp.Width "580px"; Border "1px solid #ccc"; Overflow "auto"] ] [  //[ ClassName "input-group input-group-lg" ]
@@ -501,7 +611,7 @@ let view (model:Model) (dispatch: AppMsg -> unit) =
                     //feedback or error
                     div [  Style [ CSSProp.WhiteSpace "pre-line"; Margin "10px 0 0 0"; Padding "10px"; Height "270px"; CSSProp.Width "550px"; Border "1px solid #ccc"; Overflow "auto"]  ] 
                         [ div [] [words 25 "Feedback"]
-                          text "As you can see, \n once there's enough text in this box,\n the box will grow scroll bars... that's why we call it a scroll box! You could also place an image into the scroll box."]
+                          text (model.Coursework.Coursework.Feedback+"\n\n"+model.Coursework.Coursework.Grade)  ]
                     
                     //cmdout
                     div [  Style [ CSSProp.WhiteSpace "pre-line"; Margin "10px 0 0 0"; Padding "10px"; Height "270px"; CSSProp.Width "550px"; Border "1px solid #ccc"; Overflow "auto"]  ] 
@@ -521,6 +631,33 @@ let view (model:Model) (dispatch: AppMsg -> unit) =
                 div [  Style [Margin "0 10px"; Float "right"] ] [
                     button [ ClassName "btn btn-primary"; OnClick (fun _ -> dispatch (CourseworkMsg ClickUploadTB)) ] [ text "Upload" ] ]
                 div [ClassName "text-center"; Style [Margin "5px 0";CSSProp.WhiteSpace "pre-line"] ] [TBstateView model.TB.State] ]
+        ]
+        //Specifications tab
+        tabcontent (model.ActiveTab = CourseworkTab.Specifications) [
+            form [ Style [Margin "0 10px"; Float "left"] ] [
+                div [] [words 25 "Upload spec or write it directly here, and press Save"]
+                input [ HTMLAttr.Type "file"; HTMLAttr.Multiple false; DOMAttr.OnChange (fun ev -> dispatch (CourseworkMsg (SetSpecFile  !!ev.target?files ))) ] [] ]
+            div [  Style [Margin "0 10px"; Float "right"] ] [
+                button [ ClassName "btn btn-primary"; OnClick (fun _ -> dispatch (CourseworkMsg ClickUploadSpec)) ] [ text "Open" ]
+                button [ ClassName "btn btn-primary"; OnClick (fun _ -> dispatch (CourseworkMsg ClickUploadSpec)) ] [ text "Save" ] ]
+            //Fable.Helpers.React.textarea [Cols 200.0; Rows 200.0; Id "tas_Id"; Name "tas_Name"; DefaultValue (U2.Case1 "hey bro")] []//unbox model.TB.TB.Spectext
+            specTextArea model.TB.TB.Spectext
+        ]
+        //OriginalCode tab
+        tabcontent (model.ActiveTab = CourseworkTab.OriginalCode) [
+            div [] []
+        ]
+        //ModelAnswer tab
+        tabcontent (model.ActiveTab = CourseworkTab.ModelAnswer) [
+            div [Style [ CSSProp.WhiteSpace "pre-line"]] [text model.TB.TB.ModelAnswertext]
+        ]
+        //Feedback tab
+        tabcontent (model.ActiveTab = CourseworkTab.Feedback) [
+            div [Style [ CSSProp.WhiteSpace "pre-line"]] [text model.Coursework.Coursework.Feedback]
+        ]
+        //CmdOut tab
+        tabcontent (model.ActiveTab = CourseworkTab.CmdOutput) [
+            div [Style [ CSSProp.WhiteSpace "pre-line"]] [text model.Coursework.Coursework.CmdOut]
         ]
     ]
     
