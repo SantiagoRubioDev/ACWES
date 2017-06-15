@@ -64,6 +64,8 @@ let startServer clientPath =
                 path "/api/user/assignmodule/" >=> RestAPI.Users.assignModule
 
                 path "/api/assignments/" >=> RestAPI.Assignments.post
+
+                path "/api/coursework/student/" >=> RestAPI.Coursework.postStudent
             ]                
             
             NOT_FOUND "Page not found."

@@ -290,6 +290,28 @@ module Assignments =
         })    
 
 module Coursework =
+    /// Handle the POST on /api/coursework/student/
+    let postStudent (ctx: HttpContext) =
+        Auth.useToken ctx (fun token -> async {
+            try
+                
+                let newStudentCoursework:Domain.StudentCoursework = 
+                    ctx.request.rawForm
+                    |> System.Text.Encoding.UTF8.GetString
+                    |> JsonConvert.DeserializeObject<Domain.StudentCoursework>
+
+                let oldcoursework = DBFile.StudentCoursework.read ctx//token.UserName
+                if oldcoursework.AssignmentID = "" then
+                    return! INTERNAL_ERROR "Please upload your coursework" ctx //the string message is not sent to the client only INTERNAL_ERROR 500 is
+                else
+                    
+                    DBFile.StudentCoursework.write newStudentCoursework ctx
+                    
+                    return! Successful.OK "yup yup" ctx
+            with exn ->
+                logger.error (eventX "SERVICE_UNAVAILABLE" >> addExn exn)
+                return! SERVICE_UNAVAILABLE "Database not available" ctx
+        })
     /// Handle the GET on /api/coursework/student/
     let getStudent (ctx: HttpContext) =
         Auth.useToken ctx (fun token -> async {

@@ -86,11 +86,17 @@ type CourseworkMsg =
   | FetchTBError of exn
   //Spec
   | SetSpecFile of Fable.Import.Browser.FileList
-  | ClickUploadSpec
+  | ClickOpenSpec
+  | ClickSaveSpec
+  | UpdateSpec of string
   | ReadSpecSuccess of string
   | ReadSpecError of exn
   | UploadSpecSuccess of string
   | UploadSpecError of exn
+  //Assignement
+  | ClickSaveFeedback
+  | UpdateGrade of string
+  | UpdateFeedback of string
 
 
 /// The messages processed online test 

@@ -93,6 +93,41 @@ type TBType =
           SpecFile = this.SpecFile
           TB = newTB}
 
+
+
+[<Pojo>]
+type TextAreaCompProps =
+    { Value : string
+      X : float
+      Y : float
+      On_Change : string -> Unit }
+
+[<Pojo>]
+type TextInputCompState =
+    { Value : string option }
+
+type TextAreaComp(initialProps) as this = 
+    inherit React.Component<TextAreaCompProps, TextInputCompState>(initialProps)
+    do
+        this.setInitState
+            { Value = None }
+
+    let change value =
+        this.setState({ this.state with
+                            Value = Some value })  
+
+    member this.render () =
+            textarea [ Cols this.props.X 
+                       Rows this.props.Y
+                       Id "tas_Id"
+                       Value !!(match this.state.Value with Some v -> v | _ -> this.props.Value)
+                       OnChange (fun e -> 
+                                    change (!!e.target?value)
+                                    this.props.On_Change (!!e.target?value))] []
+
+
+let modifiedTextArea text x y on_Change = com<TextAreaComp, _, _> { Value = text; X = x; Y = y ;On_Change=on_Change} []
+
 /////---------------------------------------------------------------------MODEL---------------------------------------------------------------------/////
 
 type Model = { 
@@ -304,7 +339,7 @@ let getTBCmd model =
 
 //Spec
 
-let postSpec (model:Model) =
+let postSpec1 (model:Model) =
     promise {        
         let url = "/api/upload/spec/?ModuleId="+model.Assignment.ModuleID+
                   "&AssignmentId="+model.AssignmentID+"&UserName="+model.User.UserName
@@ -312,6 +347,35 @@ let postSpec (model:Model) =
         Browser.console.log("reader state: "+(model.TB.SpecFile.Value.[0].Reader.readyState.ToString()))
 
         let body = toJson (model.TB.SpecFile.Value.[0].Reader.result.ToString())
+
+        let props = 
+            [ RequestProperties.Method HttpMethod.POST
+              RequestProperties.Headers [
+                HttpRequestHeaders.Authorization ("Bearer " + model.User.Token)
+                //HttpRequestHeaders.ContentType "multipart/form-data" ]
+                HttpRequestHeaders.ContentType "application/json" ]
+              RequestProperties.Body ( unbox body ) ]
+
+        try
+
+            let! response = Fetch.fetch url props
+
+            if not response.Ok then
+                return! failwithf "Error: %d" response.Status
+            else    
+                let! data = response.text() 
+                return data
+        with
+        | _ -> return! failwithf "Could not upload file."
+        
+    }
+
+let postSpec2 (model:Model) =
+    promise {        
+        let url = "/api/upload/spec/?ModuleId="+model.Assignment.ModuleID+
+                  "&AssignmentId="+model.AssignmentID+"&UserName="+model.User.UserName
+
+        let body = toJson (model.TB.TB.Spectext)
 
         let props = 
             [ RequestProperties.Method HttpMethod.POST
@@ -364,11 +428,46 @@ let readSpec (model:Model) =
 let readSpecCmd model = 
     Cmd.ofAsync readSpec model ReadSpecSuccess ReadSpecError
 
-let postSpecCmd fiName model = 
-    Cmd.ofPromise postSpec (model) UploadSpecSuccess UploadSpecError
+let postSpecCmd1 model = 
+    Cmd.ofPromise postSpec1 (model) UploadSpecSuccess UploadSpecError
+
+let postSpecCmd2 model = 
+    Cmd.ofPromise postSpec2 (model) UploadSpecSuccess UploadSpecError
+
+// Assignment
 
 
+let postStudentCoursework (model:Model) =
+    promise {        
+        let url = "/api/coursework/student/?ModuleId="+model.Assignment.ModuleID+
+                  "&AssignmentId="+model.AssignmentID+"&UserName="+model.User.UserName
 
+        let body = toJson (model.Coursework.Coursework)
+
+        let props = 
+            [ RequestProperties.Method HttpMethod.POST
+              RequestProperties.Headers [
+                HttpRequestHeaders.Authorization ("Bearer " + model.User.Token)
+                //HttpRequestHeaders.ContentType "multipart/form-data" ]
+                HttpRequestHeaders.ContentType "application/json" ]
+              RequestProperties.Body ( unbox body ) ]
+
+        try
+
+            let! response = Fetch.fetch url props
+
+            if not response.Ok then
+                return! failwithf "Error: %d" response.Status
+            else    
+                let! data = response.text() 
+                return data
+        with
+        | _ -> return! failwithf "Could not upload file."
+        
+    }
+
+let postStudentCourseworkCmd model = 
+    Cmd.ofPromise postStudentCoursework (model) UploadCourseworkSuccess UploadCourseworkError
 
 /////---------------------------------------------------------------------INIT---------------------------------------------------------------------/////
 
@@ -497,7 +596,7 @@ let update (msg:CourseworkMsg) model : Model*Cmd<CourseworkMsg> =
             { model with TB = {model.TB with SpecFile = Some [FileUploadType.addFile f.[0]] } }, Cmd.none
         else
             { model with TB = model.TB.withNewState (Upload ( Failure "please choose exactly one file" ) ) } , Cmd.none
-    | CourseworkMsg.ClickUploadSpec -> 
+    | CourseworkMsg.ClickOpenSpec -> 
         Browser.console.log(Fable.Import.Browser.document.getElementById("tas_Id"))
         //Fable.Import.Browser.document.getElementById("tas_Id").setAttribute ("tas_Name",model.TB.TB.Spectext)
         //not up to date (check postTBcmd)
@@ -508,9 +607,17 @@ let update (msg:CourseworkMsg) model : Model*Cmd<CourseworkMsg> =
                 { model with TB = model.TB.withNewState ( Upload ( Failure "please choose exactly one file" ) ) } , Cmd.none
         else
            { model with TB = model.TB.withNewState ( Upload ( Failure "please choose your file before pressing upload" ) ) } , Cmd.none
+    | CourseworkMsg.ClickSaveSpec -> 
+        Browser.console.log(Fable.Import.Browser.document.getElementById("tas_Id"))
+        if not (model.TB.TB.Spectext = "") then
+           { model with TB = model.TB.withNewState StartUpload }, postSpecCmd2 model
+        else
+           { model with TB = model.TB.withNewState ( Upload ( Failure "please write something" ) ) } , Cmd.none
+    | CourseworkMsg.UpdateSpec specText ->
+        { model with TB = { model.TB with TB = { model.TB.TB with Spectext = specText } } } , Cmd.none
     | CourseworkMsg.ReadSpecSuccess msg->
         //not up to date (everything)
-        { model with TB = model.TB.withNewState (Read (Success msg ) ) }, postSpecCmd model.TB.SpecFile.Value.[0].File.name model
+        { model with TB = model.TB.withNewState (Read (Success msg ) ) }, postSpecCmd1 model
     | CourseworkMsg.ReadSpecError error ->
         { model with TB = model.TB.withNewState ( Read ( Failure error.Message ) ) }, Cmd.none
     | CourseworkMsg.UploadSpecSuccess res ->
@@ -518,6 +625,14 @@ let update (msg:CourseworkMsg) model : Model*Cmd<CourseworkMsg> =
         { model with TB = model.TB.withNewState ( Upload ( Success res ) ) } , getTBCmd model
     | CourseworkMsg.UploadSpecError error ->
         { model with TB = model.TB.withNewState ( Upload ( Failure error.Message ) ) }, Cmd.none
+    
+    //Assignment
+    | CourseworkMsg.UpdateGrade grade ->
+        { model with Coursework = { model.Coursework with Coursework = { model.Coursework.Coursework with Grade = grade } } } , Cmd.none
+    | CourseworkMsg.UpdateFeedback feedback ->
+        { model with Coursework = { model.Coursework with Coursework = { model.Coursework.Coursework with Feedback = feedback } } } , Cmd.none
+    | CourseworkMsg.ClickSaveFeedback ->
+        model, postStudentCourseworkCmd model
     
     
 /////---------------------------------------------------------------------StateView---------------------------------------------------------------------/////
@@ -548,8 +663,8 @@ let TBstateView (state:TBUploadState) =
     | TBUploadState.Read (Failure msg) -> div [] [text ( "Read failed: "+msg) ]
     | TBUploadState.Upload (Failure msg) -> div [] [text ( "Upload failed: "+msg) ]
 
-let specTextArea specText= Fable.Helpers.React.textarea [Cols 200.0; Rows 200.0; Id "tas_Id";DefaultValue (U2.Case1 specText)] []//unbox model.TB.TB.Spectext ; DefaultValue (U2.Case1 specText)
-
+//let specTextArea specText= Fable.Helpers.React.textarea [Cols 200.0; Rows 200.0; Id "tas_Id";Value (U2.Case1 specText); OnChange (fun e -> ignore())] []//unbox model.TB.TB.Spectext ; DefaultValue (U2.Case1 specText)
+//let specTextArea specText = com<TextAreaComp, _, _> { Value = specText } []
 
 
 
@@ -638,10 +753,10 @@ let view (model:Model) (dispatch: AppMsg -> unit) =
                 div [] [words 25 "Upload spec or write it directly here, and press Save"]
                 input [ HTMLAttr.Type "file"; HTMLAttr.Multiple false; DOMAttr.OnChange (fun ev -> dispatch (CourseworkMsg (SetSpecFile  !!ev.target?files ))) ] [] ]
             div [  Style [Margin "0 10px"; Float "right"] ] [
-                button [ ClassName "btn btn-primary"; OnClick (fun _ -> dispatch (CourseworkMsg ClickUploadSpec)) ] [ text "Open" ]
-                button [ ClassName "btn btn-primary"; OnClick (fun _ -> dispatch (CourseworkMsg ClickUploadSpec)) ] [ text "Save" ] ]
+                button [ ClassName "btn btn-primary"; OnClick (fun _ -> dispatch (CourseworkMsg ClickOpenSpec)) ] [ text "Open" ]
+                button [ ClassName "btn btn-primary"; OnClick (fun _ -> dispatch (CourseworkMsg ClickSaveSpec)) ] [ text "Save" ] ]
             //Fable.Helpers.React.textarea [Cols 200.0; Rows 200.0; Id "tas_Id"; Name "tas_Name"; DefaultValue (U2.Case1 "hey bro")] []//unbox model.TB.TB.Spectext
-            specTextArea model.TB.TB.Spectext
+            modifiedTextArea model.TB.TB.Spectext 100.0 100.0 (fun specText -> dispatch (CourseworkMsg (UpdateSpec specText)))
         ]
         //OriginalCode tab
         tabcontent (model.ActiveTab = CourseworkTab.OriginalCode) [
@@ -653,7 +768,11 @@ let view (model:Model) (dispatch: AppMsg -> unit) =
         ]
         //Feedback tab
         tabcontent (model.ActiveTab = CourseworkTab.Feedback) [
-            div [Style [ CSSProp.WhiteSpace "pre-line"]] [text model.Coursework.Coursework.Feedback]
+            modifiedTextArea model.Coursework.Coursework.Grade 5.0 2.0 (fun grade -> dispatch (CourseworkMsg (UpdateGrade grade)))
+            modifiedTextArea model.Coursework.Coursework.Feedback 30.0 30.0 (fun feedback -> dispatch (CourseworkMsg (UpdateFeedback feedback)))//div [Style [ CSSProp.WhiteSpace "pre-line"]] [text model.Coursework.Coursework.Feedback]
+            div [  Style [Margin "0 10px"; Float "right"] ] [
+                button [ ClassName "btn btn-primary"; OnClick (fun _ -> dispatch (CourseworkMsg ClickSaveFeedback)) ] [ text "Save" ]
+                ]
         ]
         //CmdOut tab
         tabcontent (model.ActiveTab = CourseworkTab.CmdOutput) [
